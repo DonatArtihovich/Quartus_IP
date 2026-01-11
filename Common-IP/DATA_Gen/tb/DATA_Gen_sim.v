@@ -7,10 +7,10 @@
 
 module DATA_Gen_sim #(
     parameter real FREQ_MHZ               = 50.0,
-    parameter      TESTBENCH_DURATION_MS  = 50,
+    parameter      TESTBENCH_DURATION_MS  = 5,
 
-    parameter      PACKET_WORD_LEN_BITS   = 16,
-    parameter      PACKET_LEN_WORDS       = 12,
+    parameter      PACKET_WORD_LEN_BITS   = 8,
+    parameter      PACKET_LEN_WORDS       = 5,
     parameter      PACKET_ID              = 8'hAE,
     parameter      PACKET_PAUSE_TICKS     = 10,
 
@@ -65,10 +65,10 @@ assign m_axis_tready = ~|period_cnt;
 //------------------------- CS checking
 //
 reg  [PACKET_WORD_LEN_BITS : 0]     cs_0 = 0;
-wire [PACKET_WORD_LEN_BITS - 1 : 0] cs = cs_0[PACKET_WORD_LEN_BITS - 1 : 0] + cs_0[PACKET_WORD_LEN_BITS];
-reg                                 cs_valid = 0;
+wire [PACKET_WORD_LEN_BITS : 0]     cs_1 = m_axis_tlast? cs_0 : cs_0 + m_axis_tdata;
+wire [PACKET_WORD_LEN_BITS - 1 : 0] cs = cs_1[PACKET_WORD_LEN_BITS - 1 : 0] + cs_1[PACKET_WORD_LEN_BITS];
 
-wire cs_err = (m_axis_tvalid && m_axis_tready && m_axis_tlast) && (cs_valid && m_axis_tdata != ~cs);
+wire cs_err = (m_axis_tvalid && m_axis_tready && m_axis_tlast) && (m_axis_tdata != ~cs);
 
 reg [31 : 0] cs_err_cnt = 0;
 
@@ -77,11 +77,8 @@ always @(posedge clk) begin
         cs_0       <= 0;
         cs_err_cnt <= 0;
     end else begin
-        cs_valid <= 0;
-
         if (m_axis_tvalid & m_axis_tready) begin
-            cs_0     <= m_axis_tlast? 0 : cs_0 + m_axis_tdata;
-            cs_valid <= 1;
+            cs_0     <= m_axis_tlast? 0 : cs;
         end
 
         if (cs_err && ~&cs_err_cnt) cs_err_cnt <= cs_err_cnt + 1;

@@ -100,7 +100,7 @@ always @(posedge clk) begin
 		cs_0 <= 0;
 	end else begin
 		if (m_axis_tready & m_axis_tvalid) begin
-		    cs_0 <= (state[0] ^ state[1]) ? cs_0 + data : 0;
+		    cs_0 <= (state[0] ^ state[1]) ? cs : 0;
 		end
 	end
 end
