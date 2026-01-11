@@ -26,9 +26,13 @@ reg  [$clog2(PACKET_LEN_WORDS) - 1 : 0]   word_cnt = 0;
 reg  [$clog2(PACKET_PAUSE_TICKS) - 1 : 0] pause_cnt = 0;
 reg  [PACKET_WORD_LEN_BITS - 1 : 0]       data = PACKET_ID;
 
-reg  [$clog2(PACKET_LEN_WORDS) : 0]       cs_0 = PACKET_ID;
-wire [$clog2(PACKET_LEN_WORDS) - 1 : 0]   cs = cs_0[$clog2(PACKET_LEN_WORDS) - 1 : 0] + cs_0[$clog2(PACKET_LEN_WORDS)];
+reg  [PACKET_WORD_LEN_BITS : 0]       cs_0 = PACKET_ID;
+wire [PACKET_WORD_LEN_BITS : 0]       cs_1 = cs_0 + data;
+wire [PACKET_WORD_LEN_BITS - 1 : 0]   cs = cs_1[PACKET_WORD_LEN_BITS - 1 : 0] + cs_1[PACKET_WORD_LEN_BITS];
 
+
+//--------------------Packets Generation
+//
 reg  [3 : 0] state = TRM_ID;
 
 always @(posedge clk) begin
@@ -76,6 +80,18 @@ always @(posedge clk) begin
 		end
 		default: state <= TRM_ID;
 		endcase
+	end
+end
+
+//--------------------------CS Calculation
+//
+always @(posedge clk) begin
+	if (~rstn | ~gen_en) begin
+		cs_0 <= 0;
+	end else begin
+		if (m_axis_tready & m_axis_tvalid) begin
+		    cs_0 <= (state[0] ^ state[1]) ? cs_0 + data : 0;
+		end
 	end
 end
 

@@ -41,6 +41,7 @@ UUT (
     .m_axis_tready (m_axis_tready)
 );
 
+// m_axis_tready emulation
 integer period_cnt = 0;
 
 always @(posedge clk) begin
@@ -52,6 +53,31 @@ always @(posedge clk) begin
 end
 
 assign m_axis_tready = ~|period_cnt;
+
+// CS checking
+reg  [PACKET_WORD_LEN_BITS : 0]     cs_0 = 0;
+wire [PACKET_WORD_LEN_BITS - 1 : 0] cs = cs_0[PACKET_WORD_LEN_BITS - 1 : 0] + cs_0[PACKET_WORD_LEN_BITS];
+reg                                 cs_valid = 0;
+
+wire cs_err = (m_axis_tvalid && m_axis_tready && m_axis_tlast) && (cs_valid && m_axis_tdata != ~cs);
+
+reg [31 : 0] cs_err_cnt = 0;
+
+always @(posedge clk) begin
+    if (~rstn | ~gen_en) begin
+        cs_0       <= 0;
+        cs_err_cnt <= 0;
+    end else begin
+        cs_valid <= 0;
+
+        if (m_axis_tvalid & m_axis_tready) begin
+            cs_0     <= m_axis_tlast? 0 : cs_0 + m_axis_tdata;
+            cs_valid <= 1;
+        end
+
+        if (cs_err && ~&cs_err_cnt) cs_err_cnt <= cs_err_cnt + 1;
+    end
+end
 
 initial begin
     #100; rstn <= 1;
