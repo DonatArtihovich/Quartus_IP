@@ -1,3 +1,13 @@
+//*****************************************************//
+// Name: DATA_Gen.v                                    //
+// Version: 1.0                                        //
+// Description: IP Core to generate data packets       //
+//-----------------------------------------------------//
+// History:                                            //
+// - (1.0) Initial version                             //
+//*****************************************************//
+`timescale 1ns / 1ps
+
 module DATA_Gen
 # (
 	parameter PACKET_WORD_LEN_BITS = 8,

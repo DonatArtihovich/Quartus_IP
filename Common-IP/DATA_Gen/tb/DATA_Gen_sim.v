@@ -1,3 +1,8 @@
+//*****************************************************//
+// Name: DATA_Gen_sim.v                                //
+// Description: Testbench for DATA_Gen_sim IP core     //
+//*****************************************************//
+
 `timescale 1ns / 1ps
 
 module DATA_Gen_sim #(
@@ -18,6 +23,8 @@ reg gen_en = 0;
 
 always #(500 / FREQ_MHZ) clk <= ~clk;
 
+//---------------------------- UUT instantiation
+//
 wire [PACKET_WORD_LEN_BITS - 1 : 0] m_axis_tdata;
 wire                                m_axis_tvalid;
 wire                                m_axis_tlast;
@@ -41,7 +48,8 @@ UUT (
     .m_axis_tready (m_axis_tready)
 );
 
-// m_axis_tready emulation
+//------------------------ Receiver emulation
+//
 integer period_cnt = 0;
 
 always @(posedge clk) begin
@@ -54,7 +62,8 @@ end
 
 assign m_axis_tready = ~|period_cnt;
 
-// CS checking
+//------------------------- CS checking
+//
 reg  [PACKET_WORD_LEN_BITS : 0]     cs_0 = 0;
 wire [PACKET_WORD_LEN_BITS - 1 : 0] cs = cs_0[PACKET_WORD_LEN_BITS - 1 : 0] + cs_0[PACKET_WORD_LEN_BITS];
 reg                                 cs_valid = 0;
@@ -79,6 +88,8 @@ always @(posedge clk) begin
     end
 end
 
+//--------------------- Control emulation
+//
 initial begin
     #100; rstn <= 1;
     #100; gen_en <= 1;
